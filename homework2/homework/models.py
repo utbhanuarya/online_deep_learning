@@ -10,7 +10,7 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class ClassificationLoss(nn.Module):
     def forward(self, logits: torch.Tensor, target: torch.LongTensor) -> torch.Tensor:
@@ -25,7 +25,8 @@ class ClassificationLoss(nn.Module):
         Returns:
             tensor, scalar loss
         """
-        raise NotImplementedError("ClassificationLoss.forward() is not implemented")
+        # raise NotImplementedError("ClassificationLoss.forward() is not implemented")
+        return F.cross_entropy(logits, target)
 
 
 class LinearClassifier(nn.Module):
@@ -42,8 +43,12 @@ class LinearClassifier(nn.Module):
             num_classes: int, number of classes
         """
         super().__init__()
+        # Calculate the size of the flattened input
+        self.flattened_size = 3 * h * w  # 3 channels (RGB), height h, width w
 
-        raise NotImplementedError("LinearClassifier.__init__() is not implemented")
+        # Define the linear layer
+        self.linear = nn.Linear(self.flattened_size, num_classes)
+        # raise NotImplementedError("LinearClassifier.__init__() is not implemented")
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -53,7 +58,14 @@ class LinearClassifier(nn.Module):
         Returns:
             tensor (b, num_classes) logits
         """
-        raise NotImplementedError("LinearClassifier.forward() is not implemented")
+        # Flatten the input tensor from (B, 3, H, W) to (B, 3 * H * W)
+        x = x.view(x.size(0), -1)  # (B, 3 * H * W)
+
+        # Pass through the linear layer
+        logits = self.linear(x)  # (B, num_classes)
+
+        return logits
+        # raise NotImplementedError("LinearClassifier.forward() is not implemented")
 
 
 class MLPClassifier(nn.Module):
